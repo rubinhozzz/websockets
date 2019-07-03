@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebSocket demo</title>
+<link rel="stylesheet" href="https://unpkg.com/mustard-ui@latest/dist/css/mustard-ui.min.css">
+<script>
+
+document.addEventListener('DOMContentLoaded', function(event) {
+
+document.getElementById('btn_setID').addEventListener('click', function(evt) {
+    let text = document.getElementById('txt_id').value;
+    if (!text)
+        return
+    ws.send('CONN*' + text);
+});
+
+document.getElementById('btn_send').addEventListener('click', function(evt) {
+    let text = document.getElementById('txt_text').value;
+    if (!text)
+        return
+    ws.send('MESG*'+ text);
+});
+
+document.getElementById('btn_exit').addEventListener('click', function(evt) {
+    if (ws)
+        ws.close();
+});
+
+var ws = new WebSocket("ws://127.0.0.1:8080/ws");
+
+ws.onopen = function() {
+    //alert("Connected!!!");
+};
+
+ws.onmessage = function (event) {
+    if (event.data == 'OK') {
+        document.getElementById('txt_text').disabled = false;
+        document.getElementById('btn_send').disabled = false;
+        document.getElementById('btn_exit').disabled = false;
+        return
+    }
+    let type = event.data.substring(0, 4);
+    if (type == 'LIST') {
+        let sel = document.getElementById('users');
+        sel.innerHTML = '';
+        let token = event.data.substring(5);
+        let users = token.split('****');
+        for (let i=0; i<users.length; i++) {
+            const user = users[i];
+            let opt = document.createElement('option');
+            opt.appendChild( document.createTextNode(user));
+            opt.value = user; 
+            sel.appendChild(opt);
+        }
+    }
+    else if (type == 'MESG') {
+        let message = event.data.substring(5);
+        document.getElementById('ta_chat').innerHTML += message + '\n';
+    }
+};
+
+ws.onclose = function(event) {
+    alert("Connection is closed..."); 
+}
+
+ws.onerror = function(error) {
+    alert('ERROR: ' + error); 
+}
+
+});
+
+</script>
+</head>
+<body>
+<div class="container-large">
+    <div class="row">
+        <div class="col col-lg-2">
+            <div id="div_login">
+                <div class="form-control">
+                    <label>ID</label>
+                    <input type="text" id="txt_id">
+                </div>
+                <button class="button-primary-outlined" id="btn_setID">Set ID</button>
+            </div>
+            <div class="form-control">
+                <select multiple size="20" id="users"></select>
+            </div>
+        </div>
+
+        <div class="col col-lg-10">
+            <div id="div_main">
+                    <div class="form-control">
+                        <label>Message</label>
+                        <input type="text" id="txt_text" disabled>
+                    </div>
+                    <button id="btn_send" class="button-primary" disabled>Send</button>
+                    <button id="btn_exit" class="" disabled>Exit</button>
+                    <textarea id="ta_chat" rows="20" cols="50"></textarea>
+                
+            </div>
+        </div>
+    </div><!-- .row -->
+</div>
+</body>
+</html>
