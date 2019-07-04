@@ -19,18 +19,24 @@ async def ws_handler(request):
     clients.append(client)
     print('Websocket connection ready')
     # send list of all clients
-    await _send_user_list() 
-    async for msg in client.ws:
+    await _send_user_list()
+    #async for msg in client.ws:
+    while True:
         """
         - CONN*ruben
         - MESG*hey hey
         - CLOSE
         """
-        print(msg)
+        try:
+            msg = await client.ws.receive()
+        except (ConnectionResetError, RuntimeError):
+            print("Connection closed, going away!")
+            #await client.ws.close()
+            clients.remove(client)
+            print('HEY!!!')
+            break
+        print(repr(msg))
         if msg.type == WSMsgType.TEXT:
-            if msg.data == 'CLOSE':
-                await client.ws.close()
-                return ws
             type_msg = msg.data[:4]
             message = msg.data[5:]
             if type_msg == 'CONN':
@@ -40,8 +46,6 @@ async def ws_handler(request):
             else:
                 for c in clients:
                     await c.ws.send_str('MESG*{}: {}'.format(client.id, message))
-    clients.remove(client)
-    return ws
 
 async def _send_user_list():
     token = '****'.join([c.id for c in clients if c.id])
