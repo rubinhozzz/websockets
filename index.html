@@ -30,7 +30,7 @@ document.getElementById('btn_exit').addEventListener('click', function(evt) {
 var ws = new WebSocket("ws://127.0.0.1:8080/ws");
 
 ws.onopen = function() {
-    //alert("Connected!!!");
+    console.log("Connected!!!");
 };
 
 ws.onmessage = function (event) {
